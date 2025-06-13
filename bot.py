@@ -27,9 +27,9 @@ def luhn_checksum(card_number: str) -> int:
 def detect_brand(bin_code: str) -> str:
     if bin_code.startswith('4'):
         return "Visa"
-    if bin_code.startswith(('51', '52', '53', '54', '55')):
+    if bin_code.startswith(('51','52','53','54','55')):
         return "MasterCard"
-    if bin_code.startswith(('34', '37')):
+    if bin_code.startswith(('34','37')):
         return "American Express"
     if bin_code.startswith('6'):
         return "Discover"
@@ -37,11 +37,11 @@ def detect_brand(bin_code: str) -> str:
 
 def generate_cc_full(bin_code, exp_month=None, exp_year=None):
     rand_len = 15 - len(bin_code)
-    base = bin_code + ''.join(str(random.randint(0, 9)) for _ in range(rand_len))
+    base = bin_code + ''.join(str(random.randint(0,9)) for _ in range(rand_len))
     cc = base + str(luhn_checksum(base))
-    month = exp_month or f"{random.randint(1, 12):02d}"
-    year = exp_year or str(random.randint(2025, 2032))
-    cvv = f"{random.randint(0, 999):03d}"
+    month = exp_month or f"{random.randint(1,12):02d}"
+    year = exp_year or str(random.randint(2025,2032))
+    cvv = f"{random.randint(0,999):03d}"
     return f"{cc}|{month}|{year}|{cvv}"
 
 def generate_txt(data):
@@ -125,10 +125,7 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         parse_mode="Markdown"
     )
 
-# Safe execution compatible with Railway/Replit
-import asyncio
-
-async def run_bot():
+async def main():
     token = os.getenv("BOT_TOKEN")
     if not token:
         print("❌ BOT_TOKEN is missing in environment variables.")
@@ -142,16 +139,17 @@ async def run_bot():
     app.add_handler(CallbackQueryHandler(export_callback))
 
     print("✅ Bot is running...")
-    await app.initialize()
-    await app.start()
-    await app.updater.start_polling()
+    await app.run_polling()
+
+# ---- Run Entry Point ---- #
+import asyncio
+import nest_asyncio
 
 if __name__ == "__main__":
     try:
+        asyncio.run(main())
+    except RuntimeError as e:
+        print("⚠️ RuntimeError caught, applying nest_asyncio patch:", e)
+        nest_asyncio.apply()
         loop = asyncio.get_event_loop()
-        if loop.is_running():
-            loop.create_task(run_bot())
-        else:
-            loop.run_until_complete(run_bot())
-    except RuntimeError:
-        asyncio.run(run_bot())
+        loop.run_until_complete(main())
