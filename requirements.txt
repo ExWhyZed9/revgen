@@ -1,3 +1,4 @@
 python-telegram-bot==20.08
 python-dotenv
 nest_asyncio
+httpx
